@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
+const cors = require("cors");
 
 let persons = [
   {
@@ -27,6 +28,8 @@ let persons = [
 
 app.use(morgan("tiny"));
 app.use(express.json());
+app.use(cors());
+app.use(express.static("build"));
 
 app.get("/api/persons", (request, response) => {
   response.json(persons);
@@ -79,6 +82,7 @@ app.delete("/api/persons/:id", (request, response) => {
   response.status(204).end();
 });
 
-app.listen(3001, () => {
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
   console.log("LISTENING ON PORT 3001");
 });

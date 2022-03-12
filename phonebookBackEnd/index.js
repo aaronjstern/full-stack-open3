@@ -1,9 +1,12 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
+const Person = require("./models/person");
+const mongoose = require("mongoose");
 
-let persons = [
+let personsHardCode = [
   {
     id: 1,
     name: "Arto Hellas",
@@ -32,7 +35,9 @@ app.use(cors());
 app.use(express.static("build"));
 
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((result) => {
+    response.json(result);
+  });
 });
 
 app.get("/info", (request, response) => {
@@ -50,18 +55,14 @@ app.post("/api/persons", (request, response) => {
     return response.status(404).json({
       error: "missing name or number",
     });
-  } else if (persons.find((person) => person.name === body.name)) {
-    return response.status(404).json({
-      error: "name must be unique",
-    });
   } else {
-    const person = {
+    const person = new Person({
       name: body.name,
       number: body.number,
-      id: Math.floor(Math.random() * 10000),
-    };
-    persons = persons.concat(person);
-    response.json(person);
+    });
+    person.save().then((savedPerson) => {
+      response.json(savedPerson);
+    });
   }
 });
 
@@ -82,7 +83,7 @@ app.delete("/api/persons/:id", (request, response) => {
   response.status(204).end();
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
-  console.log("LISTENING ON PORT 3001");
+  console.log(`LISTENING ON PORT ${PORT}`);
 });

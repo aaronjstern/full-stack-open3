@@ -18,12 +18,14 @@ app.get("/api/persons", (request, response) => {
 });
 
 app.get("/info", (request, response) => {
-  const numPersons = persons.length;
-  const requestTime = new Date();
-  response.send(`
+  Person.find({}).then((result) => {
+    const numPersons = result.length;
+    const requestTime = new Date();
+    response.send(`
   <p>Phone book has info for ${numPersons} people</p>
     <p>${requestTime}</p>
     `);
+  });
 });
 
 app.post("/api/persons", (request, response) => {
@@ -47,14 +49,29 @@ app.post("/api/persons", (request, response) => {
 });
 
 app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
+  const id = request.params.id;
+  Person.findById(id).then((person) => {
+    if (person) {
+      return response.json(person);
+    } else {
+      return response.status(404).end();
+    }
+  });
+});
 
-  const person = persons.find((person) => person.id === id);
-  if (person) {
-    return response.json(person);
-  } else {
-    return response.status(404).end();
-  }
+app.put("/api/persons/:id", (request, response) => {
+  const body = request.body;
+
+  const person = {
+    name: body.name,
+    number: body.number,
+  };
+
+  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then((updatedNote) => {
+      response.json(updatedNote);
+    })
+    .catch((error) => next(error));
 });
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -65,9 +82,9 @@ app.delete("/api/persons/:id", (request, response) => {
 });
 
 const unknownEndpoint = (request, response) => {
-  response.status.send({ error: "unknown endpoint" });
+  response.status(404).send({ error: "unknown endpoint" });
 };
-
+ 
 app.use(unknownEndpoint);
 
 const errorHandler = (error, request, response, next) => {
